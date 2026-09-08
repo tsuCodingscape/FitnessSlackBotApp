@@ -1,0 +1,304 @@
+// Team Sprint - data model
+//
+// Dev/demo datasource is SQLite (zero setup). For production, switch the
+// provider below to "postgresql" and point DATABASE_URL at the Postgres
+// instance in docker-compose.yml. Field types here are deliberately kept
+// portable across both (no native arrays/enums) so that swap is a one-line
+// change; see README "Going to production" for the couple of fields
+// (Role, ActivityType, VisibilityMode, ...) you'd promote to native Postgres
+// enums at that point.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Workspace / identity
+// ---------------------------------------------------------------------------
+
+model Organization {
+  id           String   @id @default(cuid())
+  name         String
+  slackTeamId  String   @unique
+  slackDomain  String?
+  createdAt    DateTime @default(now())
+
+  installation SlackInstallation?
+  users        User[]
+  challenges   Challenge[]
+  auditLogs    AuditLog[]
+}
+
+/// One row per Slack workspace install (OAuth tokens for the bot).
+model SlackInstallation {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String       @unique
+  botToken       String
+  botUserId      String
+  installedAt    DateTime     @default(now())
+}
+
+model User {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  slackUserId    String
+  displayName    String
+  avatarEmoji    String       @default("🏃")
+  role           String       @default("participant") // participant | captain | admin
+  createdAt      DateTime     @default(now())
+
+  teamMemberships  TeamMembership[]
+  deviceConnections DeviceConnection[]
+  activities        Activity[]
+  vpTransactions    VpTransaction[]
+  userAchievements  UserAchievement[]
+
+  @@unique([organizationId, slackUserId])
+}
+
+// ---------------------------------------------------------------------------
+// Challenge configuration (the "Challenge Builder")
+// ---------------------------------------------------------------------------
+
+model Challenge {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  name           String
+  description    String?
+  status         String       @default("draft") // draft | active | paused | completed
+  startDate      DateTime
+  endDate        DateTime
+  timezone       String       @default("America/Los_Angeles")
+  competitionMode String      @default("team") // individual | team | department | company_vs_company
+  difficulty     String       @default("standard") // casual | standard | competitive | extreme
+  participantLimit Int?
+
+  // Theme / branding (Section 22-24: theme builder, custom branding & terminology)
+  theme          Theme?
+  terminology    Json         @default("{}") // e.g. {"vp": "Team XP", "safehouse": "Checkpoint"}
+
+  // Scoring (Section 10, 40): weights + point values, fully admin-configurable
+  scoringConfig  Json         // see @shared/types ScoringConfig
+
+  // Visibility (Section 36)
+  visibilityMode String       @default("team_only") // public | team_only | anonymous | private
+
+  // Anti-cheat (Section 37)
+  antiCheatMode  String       @default("moderate") // strict | moderate | relaxed
+  allowManualEntry Boolean    @default(true)
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  chapters       Chapter[]
+  teams          Team[]
+  events         ChallengeEvent[]
+  prizes         Prize[]
+  activities     Activity[]
+  vpTransactions VpTransaction[]
+  auditLogs      AuditLog[]
+}
+
+model Theme {
+  id           String    @id @default(cuid())
+  challenge    Challenge @relation(fields: [challengeId], references: [id])
+  challengeId  String    @unique
+  key          String    // summer | space | zombies | olympics | fantasy | corporate | custom
+  displayName  String
+  primaryColor String    @default("#2563eb")
+  accentColor  String    @default("#f97316")
+  logoUrl      String?
+  boardEmojis  Json      @default("[]") // ordered emoji milestones for the game board, e.g. ["🏖️","🌴","🏄","🏔️","🏆"]
+}
+
+/// A week (or custom-length) leg of the challenge (Section 7-8).
+model Chapter {
+  id           String    @id @default(cuid())
+  challenge    Challenge @relation(fields: [challengeId], references: [id])
+  challengeId  String
+  order        Int
+  name         String
+  description  String?
+  startDate    DateTime
+  endDate      DateTime
+  distanceGoal Int       // total normalized "movement points" needed to reach this chapter's destination
+  events       ChallengeEvent[]
+
+  @@unique([challengeId, order])
+}
+
+/// Obstacles / power challenges / sprints / catch-up events (Section 13-14).
+model ChallengeEvent {
+  id           String    @id @default(cuid())
+  challenge    Challenge @relation(fields: [challengeId], references: [id])
+  challengeId  String
+  chapter      Chapter?  @relation(fields: [chapterId], references: [id])
+  chapterId    String?
+  type         String    // obstacle | power_challenge | sprint | streak_event | safehouse | side_quest | comeback
+  name         String
+  description  String?
+  startsAt     DateTime
+  endsAt       DateTime
+  config       Json      @default("{}") // e.g. {"targetPoints": 10000, "multiplier": 2, "bonusVp": 3}
+  targetTeamId String?   // for team-scoped comeback/underdog events
+  createdAt    DateTime  @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Teams
+// ---------------------------------------------------------------------------
+
+model Team {
+  id           String    @id @default(cuid())
+  challenge    Challenge @relation(fields: [challengeId], references: [id])
+  challengeId  String
+  name         String
+  emoji        String    @default("🚀")
+  colorHex     String    @default("#6366f1")
+  isLocked     Boolean   @default(false)
+
+  memberships  TeamMembership[]
+  vpTransactions VpTransaction[]
+
+  @@unique([challengeId, name])
+}
+
+model TeamMembership {
+  id        String   @id @default(cuid())
+  team      Team     @relation(fields: [teamId], references: [id])
+  teamId    String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  isCaptain Boolean  @default(false)
+  joinedAt  DateTime @default(now())
+
+  @@unique([teamId, userId])
+}
+
+// ---------------------------------------------------------------------------
+// Fitness device connections (Section 6, 31-35)
+// ---------------------------------------------------------------------------
+
+model DeviceConnection {
+  id           String   @id @default(cuid())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+  provider     String   // apple_health | garmin | fitbit | google_health_connect | samsung_health | oura | mock
+  status       String   @default("connected") // connected | disconnected | error
+  scopes       Json     @default("[]") // minimum-necessary data scopes granted, e.g. ["steps","exercise_minutes"]
+  externalUserId String?
+  accessToken  String?  // encrypted at rest in production; omitted entirely for mock providers
+  refreshToken String?
+  connectedAt  DateTime @default(now())
+  lastSyncAt   DateTime?
+
+  @@unique([userId, provider])
+}
+
+// ---------------------------------------------------------------------------
+// Normalized activity + scoring ledger
+// ---------------------------------------------------------------------------
+
+/// Normalized activity object (Section 32), already deduplicated on ingest (Section 33).
+model Activity {
+  id             String       @id @default(cuid())
+  user           User         @relation(fields: [userId], references: [id])
+  userId         String
+  challenge      Challenge    @relation(fields: [challengeId], references: [id])
+  challengeId    String
+  provider       String       // apple_health | garmin | fitbit | google_health_connect | samsung_health | oura | manual | mock
+  activityType   String       // steps | exercise_minutes | distance | calories | active_day
+  startTime      DateTime
+  endTime        DateTime
+  steps          Int?
+  distanceMeters Float?
+  durationMinutes Float?
+  calories       Float?
+  sourceId       String       // provider-native id, used for de-dup
+  ingestedAt     DateTime     @default(now())
+  flagged        Boolean      @default(false) // anti-cheat: flagged for review, not yet counted
+
+  // De-dup key: same provider can't double-report the same source activity.
+  @@unique([provider, sourceId])
+  @@index([userId, challengeId, startTime])
+}
+
+/// Every VP-earning event, so scoring is always explainable/auditable.
+model VpTransaction {
+  id          String    @id @default(cuid())
+  user        User?     @relation(fields: [userId], references: [id])
+  userId      String?
+  team        Team?     @relation(fields: [teamId], references: [id])
+  teamId      String?
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  challengeId String
+  amount      Int
+  reason      String    // daily_team_goal | chapter_reached | first_to_destination | streak | side_quest | manual_admin_adjustment | ...
+  metadata    Json      @default("{}")
+  createdAt   DateTime  @default(now())
+
+  @@index([challengeId, teamId])
+  @@index([challengeId, userId])
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  key         String   @unique // first_steps | on_fire | marathon | power_player | champion | team_player | comeback_kid
+  name        String
+  description String
+  emoji       String   @default("🏆")
+
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  user          User        @relation(fields: [userId], references: [id])
+  userId        String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  achievementId String
+  challengeId   String
+  earnedAt      DateTime    @default(now())
+
+  @@unique([userId, achievementId, challengeId])
+}
+
+// ---------------------------------------------------------------------------
+// Prizes (Section 25-26)
+// ---------------------------------------------------------------------------
+
+model Prize {
+  id          String    @id @default(cuid())
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  challengeId String
+  category    String    // overall_1st | overall_2nd | overall_3rd | most_improved | best_team_spirit | longest_streak | custom
+  scope       String    @default("team") // individual | team
+  kind        String    @default("custom") // monetary | physical_item | gift_card | pto | company_reward | custom | none
+  description String
+  value       String?   // free-form display value, e.g. "$500" or "1 extra PTO day"
+  hiddenUntilStart Boolean @default(false)
+}
+
+// ---------------------------------------------------------------------------
+// Admin audit trail (Section 30)
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id             String        @id @default(cuid())
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  organizationId String
+  challenge      Challenge?    @relation(fields: [challengeId], references: [id])
+  challengeId    String?
+  actorSlackId   String
+  action         String        // e.g. "challenge.scoring_updated", "participant.moved_team"
+  details        Json          @default("{}")
+  createdAt      DateTime      @default(now())
+}

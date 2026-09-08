@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "outDir": "dist",
+    "rootDir": ".",
+    "declaration": false,
+    "sourceMap": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["src/shared/*"],
+      "@game-engine/*": ["src/game-engine/*"],
+      "@providers/*": ["src/providers/*"],
+      "@api/*": ["src/api/*"],
+      "@slack-app/*": ["src/slack-app/*"]
+    }
+  },
+  "include": ["src", "prisma", "test"],
+  "exclude": ["node_modules", "dist"]
+}

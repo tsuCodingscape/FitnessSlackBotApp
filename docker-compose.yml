@@ -1,0 +1,19 @@
+# Production/staging datastore. Local dev and the demo script use SQLite
+# (see .env.example) so contributors can run everything with zero setup;
+# switch prisma/schema.prisma's datasource to "postgresql" to use this.
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: team_sprint
+      POSTGRES_PASSWORD: team_sprint
+      POSTGRES_DB: team_sprint
+    ports:
+      - "5432:5432"
+    volumes:
+      - team_sprint_pg:/var/lib/postgresql/data
+
+volumes:
+  team_sprint_pg:

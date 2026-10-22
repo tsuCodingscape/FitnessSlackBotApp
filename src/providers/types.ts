@@ -27,5 +27,7 @@ export interface ActivityProvider {
     externalUserId: string;
     since: Date;
     until: Date;
+    /** IANA timezone used to bucket daily totals (the challenge's timezone). Defaults to UTC. */
+    timeZone?: string;
   }): Promise<NormalizedActivity[]>;
 }

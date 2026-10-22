@@ -12,8 +12,8 @@ import type { NormalizedActivity } from "../shared/types.js";
  *     -> validate
  *     -> deduplicate across the user's connected providers
  *     -> anti-cheat screening
- *     -> upsert into Activity (DB-level @@unique([provider, sourceId]) is
- *        the final backstop against double-counting on repeated syncs)
+ *     -> upsert into Activity (DB-level @@unique([challengeId, provider, sourceId])
+ *        is the final backstop against double-counting on repeated syncs)
  *
  * Called by the sync scheduler (every few minutes for real providers, or
  * on demand by the demo script) for one user across all of their connected
@@ -27,6 +27,8 @@ export async function ingestActivityForUser(
     challengeId: string;
     since: Date;
     until: Date;
+    /** The challenge's IANA timezone, so providers bucket daily totals by local day. */
+    timeZone: string;
     antiCheatMode: AntiCheatMode;
   }
 ): Promise<{ inserted: number; flagged: number; rejected: number; deduped: number }> {
@@ -42,6 +44,7 @@ export async function ingestActivityForUser(
       externalUserId: connection.externalUserId ?? connection.userId,
       since: params.since,
       until: params.until,
+      timeZone: params.timeZone,
     });
     allActivities.push(...fetched.filter(isValidNormalizedActivity));
   }
@@ -56,7 +59,13 @@ export async function ingestActivityForUser(
   ]) {
     for (const activity of batch.activities) {
       await prisma.activity.upsert({
-        where: { provider_sourceId: { provider: activity.provider, sourceId: activity.sourceId } },
+        where: {
+          challengeId_provider_sourceId: {
+            challengeId: params.challengeId,
+            provider: activity.provider,
+            sourceId: activity.sourceId,
+          },
+        },
         create: {
           userId: activity.userId,
           challengeId: params.challengeId,
@@ -71,7 +80,7 @@ export async function ingestActivityForUser(
           sourceId: activity.sourceId,
           flagged: batch.flagged,
         },
-        // A later sync for the same (provider, sourceId) updates the record
+        // A later sync for the same (challenge, provider, sourceId) updates the record
         // rather than creating a duplicate - e.g. a partial day re-synced
         // after more steps accrue.
         update: {

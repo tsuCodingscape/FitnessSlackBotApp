@@ -7,7 +7,7 @@
 
 export interface AchievementFacts {
   totalActivitiesLogged: number;
-  currentStreakDays: number;
+  longestStreakDays: number;
   totalDistanceMiles: number;
   totalExerciseMinutes: number;
   chaptersWonFirst: number;
@@ -36,7 +36,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     name: "On Fire",
     emoji: "🔥",
     description: "Maintain a 7-day streak.",
-    isUnlocked: (f) => f.currentStreakDays >= 7,
+    isUnlocked: (f) => f.longestStreakDays >= 7,
   },
   {
     key: "marathon",

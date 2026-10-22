@@ -5,8 +5,9 @@ import type { NormalizedActivity } from "../shared/types.js";
  * Two layers of protection:
  *
  *  1. Exact de-dup: same (provider, sourceId) pair - the DB's
- *     `@@unique([provider, sourceId])` constraint on Activity is the
- *     final backstop for this; this function catches it earlier, in-batch.
+ *     `@@unique([challengeId, provider, sourceId])` constraint on Activity
+ *     is the final backstop for this; this function catches it earlier,
+ *     in-batch.
  *  2. Overlap de-dup: different providers reporting overlapping time
  *     windows of the *same* activity type for the same user (e.g. Apple
  *     Watch syncs a workout to Apple Health, and the user also has Garmin

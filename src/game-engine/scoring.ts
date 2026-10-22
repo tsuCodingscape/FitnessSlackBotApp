@@ -1,4 +1,16 @@
-import type { NormalizedActivity, ScoringConfig } from "../shared/types.js";
+import type { ActivityType, ScoringConfig } from "../shared/types.js";
+
+/**
+ * The fields scoring needs from an activity. Loose enough to accept both a
+ * NormalizedActivity and a Prisma `Activity` row (nullable numbers, plain
+ * string activityType) without casting at every call site.
+ */
+export interface ScorableActivity {
+  activityType: ActivityType | (string & {});
+  steps?: number | null;
+  durationMinutes?: number | null;
+  distanceMeters?: number | null;
+}
 
 /**
  * Converts a single normalized activity into "movement points" - the unit
@@ -10,7 +22,7 @@ import type { NormalizedActivity, ScoringConfig } from "../shared/types.js";
  * is one of {steps | exercise_minutes | distance | calories | active_day}.
  */
 export function movementPointsForActivity(
-  activity: Pick<NormalizedActivity, "activityType" | "steps" | "durationMinutes" | "distanceMeters">,
+  activity: ScorableActivity,
   config: ScoringConfig
 ): number {
   switch (activity.activityType) {
@@ -30,7 +42,7 @@ export function movementPointsForActivity(
 }
 
 export function sumMovementPoints(
-  activities: Array<Pick<NormalizedActivity, "activityType" | "steps" | "durationMinutes" | "distanceMeters">>,
+  activities: ScorableActivity[],
   config: ScoringConfig
 ): number {
   return activities.reduce((total, a) => total + movementPointsForActivity(a, config), 0);

@@ -5,23 +5,42 @@
  */
 export function currentStreak(dailyGoalMetByDate: Record<string, boolean>, asOfDateIso: string): number {
   let streak = 0;
-  let cursor = new Date(asOfDateIso + "T00:00:00Z");
+  const cursor = new Date(asOfDateIso + "T00:00:00Z");
 
-  // Walk backwards from today while the goal keeps being met.
-  // Missing a day (no data at all) is *not* the same as failing it - many
-  // real users skip logging on weekends - so only an explicit `false` breaks
-  // the streak; an absent key just means "no activity synced yet".
-  for (;;) {
-    const key = cursor.toISOString().slice(0, 10);
-    const met = dailyGoalMetByDate[key];
-    if (met === false) break;
-    if (met === true) streak += 1;
-    if (met === undefined && streak > 0) break;
-    if (met === undefined && streak === 0) break;
+  // The as-of day is still in progress: not having hit the goal yet (or not
+  // having synced at all yet) shouldn't wipe out yesterday's streak, so it
+  // only counts if it's already met, and otherwise we start from yesterday.
+  if (dailyGoalMetByDate[asOfDateIso] !== true) {
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+  }
+
+  // Walk backwards while the goal keeps being met. Any earlier day that
+  // was missed or has no data at all ends the streak.
+  while (dailyGoalMetByDate[cursor.toISOString().slice(0, 10)] === true) {
+    streak += 1;
     cursor.setUTCDate(cursor.getUTCDate() - 1);
     if (streak > 3650) break; // safety valve
   }
   return streak;
+}
+
+/**
+ * Lengths of every streak (run of consecutive goal-met days) in the
+ * history, in date order. A missed day or a day with no data ends a run.
+ */
+export function streakRuns(dailyGoalMetByDate: Record<string, boolean>): number[] {
+  const metDays = Object.keys(dailyGoalMetByDate)
+    .filter((day) => dailyGoalMetByDate[day])
+    .sort();
+  const runs: number[] = [];
+  let previous: number | null = null;
+  for (const day of metDays) {
+    const t = Date.parse(day + "T00:00:00Z");
+    if (previous !== null && t - previous === 24 * 60 * 60 * 1000) runs[runs.length - 1] += 1;
+    else runs.push(1);
+    previous = t;
+  }
+  return runs;
 }
 
 /** How many streak-bonus milestones a streak of this length has crossed, e.g. every 3 days. */

@@ -2,11 +2,14 @@ import type { PrismaClient } from "@prisma/client";
 import {
   movementPointsForActivity,
   metDailyGoal,
-  currentStreak,
+  streakRuns,
   streakMilestonesReached,
+  teamsThatWentFromLastToFirst,
   rankTeamsByChapterArrival,
   evaluateUnlockedAchievements,
+  dayKeyInTimezone,
   type AchievementFacts,
+  type MovementPointsEvent,
 } from "../game-engine/index.js";
 import type { ScoringConfig } from "../shared/types.js";
 
@@ -47,7 +50,36 @@ export async function settleChallenge(prisma: PrismaClient, challengeId: string)
     for (const membership of team.memberships) teamIdByUserId.set(membership.userId, team.id);
   }
 
-  // --- 1. Participation + per-user streak bonuses + achievements ---------
+  // --- 1. Team movement timeline, chapter-arrival order, comebacks -------
+  // Points are credited when the activity ends, so arrival order reflects
+  // which team actually crossed each chapter goal first. Team results are
+  // worked out before the per-user pass since team achievements (Champion,
+  // Comeback Kid) depend on them.
+  const movementEventsByTeam = new Map<string, MovementPointsEvent[]>();
+  for (const activity of activities) {
+    const teamId = teamIdByUserId.get(activity.userId);
+    if (!teamId) continue;
+    const events = movementEventsByTeam.get(teamId) ?? [];
+    events.push({ at: activity.endTime, points: movementPointsForActivity(activity, scoringConfig) });
+    movementEventsByTeam.set(teamId, events);
+  }
+  const teamTimelines = [...movementEventsByTeam.entries()].map(([teamId, events]) => ({ teamId, events }));
+
+  const arrivalOrderByChapter = challenge.chapters.map((chapter) => ({
+    chapter,
+    arrivalOrder: rankTeamsByChapterArrival(teamTimelines, chapter.distanceGoal),
+  }));
+  const chaptersWonFirstByTeam = new Map<string, number>();
+  for (const { arrivalOrder } of arrivalOrderByChapter) {
+    const winner = arrivalOrder[0];
+    if (winner) chaptersWonFirstByTeam.set(winner, (chaptersWonFirstByTeam.get(winner) ?? 0) + 1);
+  }
+  const comebackTeams = teamsThatWentFromLastToFirst(
+    // Teams with no activity at all still count as standing in last place.
+    challenge.teams.map((team) => ({ teamId: team.id, events: movementEventsByTeam.get(team.id) ?? [] }))
+  );
+
+  // --- 2. Participation + per-user streak bonuses + achievements ---------
   for (const [userId, userActivities] of activitiesByUser) {
     const teamId = teamIdByUserId.get(userId);
 
@@ -58,15 +90,19 @@ export async function settleChallenge(prisma: PrismaClient, challengeId: string)
     const stepsByDay = new Map<string, number>();
     for (const a of userActivities) {
       if (a.activityType !== "steps" || a.steps == null) continue;
-      const day = a.startTime.toISOString().slice(0, 10);
+      const day = dayKeyInTimezone(a.startTime, challenge.timezone);
       stepsByDay.set(day, (stepsByDay.get(day) ?? 0) + a.steps);
     }
     const dailyGoalMet: Record<string, boolean> = {};
     for (const [day, steps] of stepsByDay) dailyGoalMet[day] = metDailyGoal(steps, scoringConfig);
 
-    const lastDay = [...stepsByDay.keys()].sort().at(-1);
-    const streakDays = lastDay ? currentStreak(dailyGoalMet, lastDay) : 0;
-    const milestones = streakMilestonesReached(streakDays, scoringConfig.vp.streakMilestoneDays);
+    // Settlement covers the whole challenge, so every streak counts - not
+    // just the one still running on the last day.
+    const runs = streakRuns(dailyGoalMet);
+    const milestones = runs.reduce(
+      (sum, run) => sum + streakMilestonesReached(run, scoringConfig.vp.streakMilestoneDays),
+      0
+    );
     if (milestones > 0) {
       await prisma.vpTransaction.create({
         data: {
@@ -75,7 +111,7 @@ export async function settleChallenge(prisma: PrismaClient, challengeId: string)
           challengeId,
           amount: milestones * scoringConfig.vp.streakBonus,
           reason: "streak",
-          metadata: { streakDays },
+          metadata: { streakRuns: runs },
         },
       });
     }
@@ -90,12 +126,12 @@ export async function settleChallenge(prisma: PrismaClient, challengeId: string)
 
     const facts: AchievementFacts = {
       totalActivitiesLogged: userActivities.length,
-      currentStreakDays: streakDays,
+      longestStreakDays: Math.max(0, ...runs),
       totalDistanceMiles,
       totalExerciseMinutes,
-      chaptersWonFirst: 0, // set below, second pass, once chapter-arrival order is known
+      chaptersWonFirst: teamId ? chaptersWonFirstByTeam.get(teamId) ?? 0 : 0,
       helpedTeamReachDailyGoalCount: Object.values(dailyGoalMet).filter(Boolean).length,
-      movedTeamFromLastToFirst: false,
+      movedTeamFromLastToFirst: teamId ? comebackTeams.has(teamId) : false,
     };
     const unlocked = evaluateUnlockedAchievements(facts);
     for (const achievement of unlocked) {
@@ -121,19 +157,8 @@ export async function settleChallenge(prisma: PrismaClient, challengeId: string)
     }
   }
 
-  // --- 2. Team movement totals + chapter-arrival bonuses ------------------
-  const movementByTeam = new Map<string, number>();
-  for (const activity of activities) {
-    const teamId = teamIdByUserId.get(activity.userId);
-    if (!teamId) continue;
-    movementByTeam.set(teamId, (movementByTeam.get(teamId) ?? 0) + movementPointsForActivity(activity, scoringConfig));
-  }
-
-  for (const chapter of challenge.chapters) {
-    const arrivalOrder = rankTeamsByChapterArrival(
-      [...movementByTeam.entries()].map(([teamId, cumulativeMovementPoints]) => ({ teamId, cumulativeMovementPoints })),
-      chapter.distanceGoal
-    );
+  // --- 3. Chapter-arrival bonuses ----------------------------------------
+  for (const { chapter, arrivalOrder } of arrivalOrderByChapter) {
     for (const [index, teamId] of arrivalOrder.entries()) {
       await prisma.vpTransaction.create({
         data: { teamId, challengeId, amount: scoringConfig.vp.chapterReached, reason: "chapter_reached", metadata: { chapter: chapter.name } },

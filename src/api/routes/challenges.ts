@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { DEFAULT_SCORING_CONFIG } from "../../shared/types.js";
+import { isValidTimeZone } from "../../game-engine/days.js";
 
 export const challengesRouter = Router();
 
@@ -11,7 +12,12 @@ const createChallengeSchema = z.object({
   description: z.string().optional(),
   startDate: z.coerce.date(),
   endDate: z.coerce.date(),
-  timezone: z.string().default("America/Los_Angeles"),
+  // Every day bucket (today, daily goals, streaks) is computed in this zone,
+  // so an unknown name would break the Slack app for the whole challenge.
+  timezone: z
+    .string()
+    .refine(isValidTimeZone, { message: 'Must be an IANA timezone name, e.g. "America/Los_Angeles"' })
+    .default("America/Los_Angeles"),
   competitionMode: z.enum(["individual", "team", "department", "company_vs_company"]).default("team"),
   difficulty: z.enum(["casual", "standard", "competitive", "extreme"]).default("standard"),
   participantLimit: z.number().int().positive().optional(),

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
-import { buildLeaderboard, movementPointsForActivity } from "../../game-engine/index.js";
+import { buildLeaderboard, movementPointsForActivity, type ScorableActivity } from "../../game-engine/index.js";
 import type { ScoringConfig } from "../../shared/types.js";
 
 export const leaderboardRouter = Router();
@@ -76,7 +76,7 @@ leaderboardRouter.get("/:challengeId/individuals", async (req, res) => {
         displayName: string;
         avatarEmoji: string;
         vpTransactions: { amount: number }[];
-        activities: Parameters<typeof movementPointsForActivity>[0][];
+        activities: ScorableActivity[];
       },
       i: number
     ) => ({

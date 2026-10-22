@@ -28,15 +28,41 @@ describe("computeTeamProgress", () => {
 });
 
 describe("rankTeamsByChapterArrival", () => {
-  it("only ranks teams that have actually reached the chapter goal, fastest first", () => {
+  const day = (n: number) => new Date(Date.UTC(2026, 8, n));
+
+  it("only ranks teams that have actually reached the chapter goal", () => {
     const ranking = rankTeamsByChapterArrival(
       [
-        { teamId: "phoenix", cumulativeMovementPoints: 1200 },
-        { teamId: "galaxy", cumulativeMovementPoints: 900 },
-        { teamId: "rockets", cumulativeMovementPoints: 400 },
+        { teamId: "phoenix", events: [{ at: day(1), points: 1200 }] },
+        { teamId: "galaxy", events: [{ at: day(1), points: 900 }] },
+        { teamId: "rockets", events: [{ at: day(1), points: 400 }] },
       ],
       1000
     );
     expect(ranking).toEqual(["phoenix"]);
+  });
+
+  it("orders by when the goal was crossed, not by current totals", () => {
+    const ranking = rankTeamsByChapterArrival(
+      [
+        // Galaxy arrives later (day 6) but ends up far ahead overall.
+        { teamId: "galaxy", events: [{ at: day(6), points: 600 }, { at: day(7), points: 2000 }] },
+        // Events are deliberately out of order; Phoenix crosses 500 on day 3.
+        { teamId: "phoenix", events: [{ at: day(5), points: 100 }, { at: day(1), points: 300 }, { at: day(3), points: 250 }] },
+      ],
+      500
+    );
+    expect(ranking).toEqual(["phoenix", "galaxy"]);
+  });
+
+  it("breaks same-moment arrivals by the larger total at that moment", () => {
+    const ranking = rankTeamsByChapterArrival(
+      [
+        { teamId: "a", events: [{ at: day(2), points: 520 }] },
+        { teamId: "b", events: [{ at: day(2), points: 700 }] },
+      ],
+      500
+    );
+    expect(ranking).toEqual(["b", "a"]);
   });
 });

@@ -1,11 +1,13 @@
 import "dotenv/config";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type Prisma } from "@prisma/client";
 import { DEFAULT_SCORING_CONFIG } from "../src/shared/types.js";
 import { ingestActivityForUser } from "../src/providers/ingest.js";
 import { settleChallenge } from "../src/scripts/settleChallenge.js";
-import { buildLeaderboard, movementPointsForActivity } from "../src/game-engine/index.js";
+import { buildLeaderboard, movementPointsForActivity, startOfDayInTimezone } from "../src/game-engine/index.js";
 
 const prisma = new PrismaClient();
+
+const TIMEZONE = "America/Los_Angeles";
 
 const DEMO_PROVIDERS = ["apple_health", "garmin", "fitbit", "google_health_connect"] as const;
 
@@ -42,10 +44,11 @@ async function main() {
     data: { name: "Codingscape", slackTeamId: "T_DEMO_CODINGSCAPE", slackDomain: "codingscape" },
   });
 
-  const startDate = new Date();
-  startDate.setUTCDate(startDate.getUTCDate() - 20); // pretend we're 20 days into a 28-day challenge
-  const endDate = new Date(startDate);
-  endDate.setUTCDate(endDate.getUTCDate() + 28);
+  // Pretend we're 20 days into a 28-day challenge. Starting at local
+  // midnight means each simulated day lines up with a calendar day in the
+  // challenge's timezone, and the last one is today.
+  const startDate = startOfDayInTimezone(addDays(new Date(), -20), TIMEZONE);
+  const endDate = addDays(startDate, 28);
 
   const challenge = await prisma.challenge.create({
     data: {
@@ -55,11 +58,12 @@ async function main() {
       status: "active",
       startDate,
       endDate,
+      timezone: TIMEZONE,
       competitionMode: "team",
       difficulty: "standard",
       visibilityMode: "public",
       antiCheatMode: "moderate",
-      scoringConfig: DEFAULT_SCORING_CONFIG,
+      scoringConfig: DEFAULT_SCORING_CONFIG as unknown as Prisma.InputJsonObject,
       terminology: { vp: "Victory Points", safehouse: "Safehouse", chapter: "Chapter" },
       theme: {
         create: {
@@ -127,6 +131,7 @@ async function main() {
       challengeId: challenge.id,
       since: startDate,
       until: new Date(),
+      timeZone: TIMEZONE,
       antiCheatMode: "moderate",
     });
     console.log(

@@ -3,7 +3,7 @@ import { evaluateUnlockedAchievements, type AchievementFacts } from "../src/game
 
 const baseFacts: AchievementFacts = {
   totalActivitiesLogged: 0,
-  currentStreakDays: 0,
+  longestStreakDays: 0,
   totalDistanceMiles: 0,
   totalExerciseMinutes: 0,
   chaptersWonFirst: 0,
@@ -25,7 +25,7 @@ describe("evaluateUnlockedAchievements", () => {
     const unlocked = evaluateUnlockedAchievements({
       ...baseFacts,
       totalActivitiesLogged: 20,
-      currentStreakDays: 7,
+      longestStreakDays: 7,
       totalDistanceMiles: 55,
     });
     const keys = unlocked.map((a) => a.key);

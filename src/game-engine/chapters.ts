@@ -43,13 +43,37 @@ export function computeTeamProgress(teamId: string, cumulativeMovementPoints: nu
   };
 }
 
-/** Which teams reached a given chapter's destination first, for first/second-place VP bonuses. */
+/** Movement points a team earned, and when (e.g. one entry per activity, at its endTime). */
+export interface MovementPointsEvent {
+  at: Date;
+  points: number;
+}
+
+/**
+ * Which teams reached a given chapter's destination, in the order they got
+ * there, for first/second-place VP bonuses. Order is by the moment each
+ * team's running total first crossed the goal - not by current totals, or a
+ * team that arrived later but has since pulled ahead would steal "first to
+ * destination". Teams arriving at the same instant are tie-broken by the
+ * larger running total at that moment.
+ */
 export function rankTeamsByChapterArrival(
-  teamsCumulativePoints: Array<{ teamId: string; cumulativeMovementPoints: number }>,
+  teams: Array<{ teamId: string; events: MovementPointsEvent[] }>,
   chapterGoal: number
 ): string[] {
-  return teamsCumulativePoints
-    .filter((t) => t.cumulativeMovementPoints >= chapterGoal)
-    .sort((a, b) => b.cumulativeMovementPoints - a.cumulativeMovementPoints)
-    .map((t) => t.teamId);
+  const arrivals: Array<{ teamId: string; arrivedAt: number; totalAtArrival: number }> = [];
+  for (const team of teams) {
+    const events = [...team.events].sort((a, b) => a.at.getTime() - b.at.getTime());
+    let total = 0;
+    for (const event of events) {
+      total += event.points;
+      if (total >= chapterGoal) {
+        arrivals.push({ teamId: team.teamId, arrivedAt: event.at.getTime(), totalAtArrival: total });
+        break;
+      }
+    }
+  }
+  return arrivals
+    .sort((a, b) => a.arrivedAt - b.arrivedAt || b.totalAtArrival - a.totalAtArrival)
+    .map((a) => a.teamId);
 }

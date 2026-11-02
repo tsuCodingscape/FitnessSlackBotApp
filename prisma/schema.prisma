@@ -7,6 +7,11 @@
 // change; see README "Going to production" for the couple of fields
 // (Role, ActivityType, VisibilityMode, ...) you'd promote to native Postgres
 // enums at that point.
+//
+// Json defaults are written as @default(dbgenerated("'{}'")) rather than
+// @default("{}"): Prisma's SQLite connector emits the latter as an unquoted
+// `DEFAULT {}`, which SQLite rejects. The quoted literal also works as-is
+// for Postgres jsonb columns.
 
 generator client {
   provider = "prisma-client-js"
@@ -83,7 +88,7 @@ model Challenge {
 
   // Theme / branding (Section 22-24: theme builder, custom branding & terminology)
   theme          Theme?
-  terminology    Json         @default("{}") // e.g. {"vp": "Team XP", "safehouse": "Checkpoint"}
+  terminology    Json         @default(dbgenerated("'{}'")) // e.g. {"vp": "Team XP", "safehouse": "Checkpoint"}
 
   // Scoring (Section 10, 40): weights + point values, fully admin-configurable
   scoringConfig  Json         // see @shared/types ScoringConfig
@@ -116,7 +121,7 @@ model Theme {
   primaryColor String    @default("#2563eb")
   accentColor  String    @default("#f97316")
   logoUrl      String?
-  boardEmojis  Json      @default("[]") // ordered emoji milestones for the game board, e.g. ["🏖️","🌴","🏄","🏔️","🏆"]
+  boardEmojis  Json      @default(dbgenerated("'[]'")) // ordered emoji milestones for the game board, e.g. ["🏖️","🌴","🏄","🏔️","🏆"]
 }
 
 /// A week (or custom-length) leg of the challenge (Section 7-8).
@@ -147,7 +152,7 @@ model ChallengeEvent {
   description  String?
   startsAt     DateTime
   endsAt       DateTime
-  config       Json      @default("{}") // e.g. {"targetPoints": 10000, "multiplier": 2, "bonusVp": 3}
+  config       Json      @default(dbgenerated("'{}'")) // e.g. {"targetPoints": 10000, "multiplier": 2, "bonusVp": 3}
   targetTeamId String?   // for team-scoped comeback/underdog events
   createdAt    DateTime  @default(now())
 }
@@ -193,7 +198,7 @@ model DeviceConnection {
   userId       String
   provider     String   // apple_health | garmin | fitbit | google_health_connect | samsung_health | oura | mock
   status       String   @default("connected") // connected | disconnected | error
-  scopes       Json     @default("[]") // minimum-necessary data scopes granted, e.g. ["steps","exercise_minutes"]
+  scopes       Json     @default(dbgenerated("'[]'")) // minimum-necessary data scopes granted, e.g. ["steps","exercise_minutes"]
   externalUserId String?
   accessToken  String?  // encrypted at rest in production; omitted entirely for mock providers
   refreshToken String?
@@ -226,8 +231,10 @@ model Activity {
   ingestedAt     DateTime     @default(now())
   flagged        Boolean      @default(false) // anti-cheat: flagged for review, not yet counted
 
-  // De-dup key: same provider can't double-report the same source activity.
-  @@unique([provider, sourceId])
+  // De-dup key: same provider can't double-report the same source activity
+  // within a challenge. Scoped per challenge so a user in two overlapping
+  // challenges gets the activity counted in each.
+  @@unique([challengeId, provider, sourceId])
   @@index([userId, challengeId, startTime])
 }
 
@@ -242,7 +249,7 @@ model VpTransaction {
   challengeId String
   amount      Int
   reason      String    // daily_team_goal | chapter_reached | first_to_destination | streak | side_quest | manual_admin_adjustment | ...
-  metadata    Json      @default("{}")
+  metadata    Json      @default(dbgenerated("'{}'"))
   createdAt   DateTime  @default(now())
 
   @@index([challengeId, teamId])
@@ -299,6 +306,6 @@ model AuditLog {
   challengeId    String?
   actorSlackId   String
   action         String        // e.g. "challenge.scoring_updated", "participant.moved_team"
-  details        Json          @default("{}")
+  details        Json          @default(dbgenerated("'{}'"))
   createdAt      DateTime      @default(now())
 }

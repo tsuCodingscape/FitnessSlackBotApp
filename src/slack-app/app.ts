@@ -3,7 +3,14 @@ import pkg from "@slack/bolt";
 const { App, LogLevel } = pkg;
 import { handleFitnessCommand } from "./commands/fitness.js";
 import { buildHomeTabView } from "./blocks/homeTab.js";
-import { getActiveChallenge, getUserBySlackId, getPersonalProgress, getTeamLeaderboard, getTeamBoardProgress } from "./queries.js";
+import {
+  getActiveChallenge,
+  getUserBySlackId,
+  getPersonalProgress,
+  getTeamLeaderboard,
+  getTeamBoardProgress,
+  getIndividualLeaderboard,
+} from "./queries.js";
 import { prisma } from "./db.js";
 
 /**
@@ -25,6 +32,9 @@ app.command("/fitness", handleFitnessCommand);
 
 // App Home tab (PRD Section 16), refreshed whenever a user opens it.
 app.event("app_home_opened", async ({ event, client }) => {
+  // This event also fires for the Messages/About tabs.
+  if (event.tab !== "home") return;
+
   const authResult = await client.auth.test();
   const teamId = authResult.team_id as string;
   const org = await prisma.organization.findUnique({ where: { slackTeamId: teamId } });
@@ -34,15 +44,17 @@ app.event("app_home_opened", async ({ event, client }) => {
   if (!challenge) return;
 
   const user = await getUserBySlackId(org.id, event.user);
-  const [teamLeaderboard, boardProgress] = await Promise.all([
+  const [teamLeaderboard, boardProgress, individualLeaderboard] = await Promise.all([
     getTeamLeaderboard(challenge.id),
     getTeamBoardProgress(challenge.id),
+    getIndividualLeaderboard(challenge.id),
   ]);
 
   let teamName: string | undefined;
   let teamRank: number | undefined;
   let teamVp: number | undefined;
   let teamPercentToNextChapter: number | undefined;
+  let teamChapterOrder: number | undefined;
   let personalTodaySteps = 0;
   let personalStreakDays = 0;
   let personalVp = 0;
@@ -58,19 +70,20 @@ app.event("app_home_opened", async ({ event, client }) => {
       const teamEntry = teamLeaderboard.find((e) => e.id === membership.teamId);
       teamRank = teamEntry?.rank;
       teamVp = teamEntry?.vp;
-      teamPercentToNextChapter = boardProgress.find(
-        (p: { teamId: string; percentComplete: number }) => p.teamId === membership.teamId
-      )?.percentComplete;
+      const teamProgress = boardProgress.find((p) => p.teamId === membership.teamId);
+      teamPercentToNextChapter = teamProgress?.percentComplete;
+      teamChapterOrder = teamProgress?.currentChapterOrder;
     }
     const progress = await getPersonalProgress(user.id, challenge.id);
     personalTodaySteps = progress.todaySteps;
     personalStreakDays = progress.streakDays;
     personalVp = progress.totalVp;
+    personalRank = individualLeaderboard.find((e) => e.id === user.id)?.rank;
   }
 
-  const currentChapter = challenge.chapters.find(
-    (c: { order: number; name: string }) => c.order === (boardProgress[0]?.currentChapterOrder ?? 1)
-  );
+  // Show the chapter the viewer's own team is on; viewers without a team
+  // just see the opening chapter.
+  const currentChapter = challenge.chapters.find((c) => c.order === teamChapterOrder);
 
   await client.views.publish({
     user_id: event.user,

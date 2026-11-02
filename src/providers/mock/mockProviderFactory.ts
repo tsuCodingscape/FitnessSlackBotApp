@@ -1,6 +1,7 @@
 import type { ActivityProvider } from "../types.js";
 import type { NormalizedActivity, ProviderKey } from "../../shared/types.js";
 import { seededRandom, randomInt } from "./random.js";
+import { dayKeyInTimezone, nextDayStartInTimezone, startOfDayInTimezone } from "../../game-engine/days.js";
 
 /**
  * Every mock provider (Apple Health, Garmin, Fitbit, Google Health Connect)
@@ -25,16 +26,22 @@ export function createMockProvider(key: ProviderKey): ActivityProvider {
       // permissions UI has something real to show even in demo mode.
       return activityTypes.map((t) => `mock:${t}`);
     },
-    async fetchActivities({ userId, externalUserId, since, until }) {
+    async fetchActivities({ userId, externalUserId, since, until, timeZone = "UTC" }) {
       const rand = seededRandom(`${key}:${userId}:${externalUserId}`);
       const baseActivityLevel = randomInt(rand, 4, 10); // 4-10, a rough "how active is this person" dial
       const activities: NormalizedActivity[] = [];
 
-      const dayMs = 24 * 60 * 60 * 1000;
-      for (let t = since.getTime(); t < until.getTime(); t += dayMs) {
-        const dayStart = new Date(t);
+      // Walk local calendar days (not fixed 24h steps, which drift by an
+      // hour across a DST change) so each record covers exactly one day in
+      // the challenge's timezone.
+      for (
+        let dayStart = startOfDayInTimezone(since, timeZone);
+        dayStart.getTime() < until.getTime();
+        dayStart = nextDayStartInTimezone(dayStart, timeZone)
+      ) {
+        const dayKey = dayKeyInTimezone(dayStart, timeZone);
         const isRestDay = rand() < 0.12; // ~12% chance of a low-activity day, like real life
-        const dayRand = seededRandom(`${key}:${userId}:${dayStart.toISOString().slice(0, 10)}`);
+        const dayRand = seededRandom(`${key}:${userId}:${dayKey}`);
 
         const steps = isRestDay
           ? randomInt(dayRand, 500, 3000)
@@ -42,7 +49,7 @@ export function createMockProvider(key: ProviderKey): ActivityProvider {
         const exerciseMinutes = isRestDay ? 0 : randomInt(dayRand, 0, baseActivityLevel * 6);
         const distanceMeters = Math.round(steps * 0.78); // ~0.78m average stride
 
-        const dayEnd = new Date(t + dayMs - 1000);
+        const dayEnd = new Date(nextDayStartInTimezone(dayStart, timeZone).getTime() - 1000);
 
         activities.push({
           userId,
@@ -51,7 +58,7 @@ export function createMockProvider(key: ProviderKey): ActivityProvider {
           startTime: dayStart,
           endTime: dayEnd,
           steps,
-          sourceId: `${key}-steps-${userId}-${dayStart.toISOString().slice(0, 10)}`,
+          sourceId: `${key}-steps-${userId}-${dayKey}`,
         });
 
         activities.push({
@@ -61,7 +68,7 @@ export function createMockProvider(key: ProviderKey): ActivityProvider {
           startTime: dayStart,
           endTime: dayEnd,
           distanceMeters,
-          sourceId: `${key}-distance-${userId}-${dayStart.toISOString().slice(0, 10)}`,
+          sourceId: `${key}-distance-${userId}-${dayKey}`,
         });
 
         if (exerciseMinutes > 0) {
@@ -72,7 +79,7 @@ export function createMockProvider(key: ProviderKey): ActivityProvider {
             startTime: dayStart,
             endTime: dayEnd,
             durationMinutes: exerciseMinutes,
-            sourceId: `${key}-exercise-${userId}-${dayStart.toISOString().slice(0, 10)}`,
+            sourceId: `${key}-exercise-${userId}-${dayKey}`,
           });
         }
       }

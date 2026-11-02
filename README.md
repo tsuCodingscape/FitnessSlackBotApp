@@ -51,8 +51,8 @@ zero external accounts or credentials.
 ## Verified state of this scaffold
 
 - `npm install`, `npm run typecheck` (strict TypeScript, zero errors), and
-  `npm test` (25 unit tests covering the entire game engine - scoring,
-  chapters, streaks, achievements, leaderboards - and cross-provider
+  `npm test` (unit tests covering the entire game engine - scoring,
+  chapters, streaks, timezone day buckets, achievements, leaderboards - and cross-provider
   de-duplication) all pass as committed.
 - `npm run db:generate` / `db:push` / `demo` need to reach
   `binaries.prisma.sh` to download Prisma's query engine the first time -

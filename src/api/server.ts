@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { requireAdminApiKey } from "./adminAuth.js";
+import { errorHandler } from "./errorHandler.js";
 import { challengesRouter } from "./routes/challenges.js";
 import { teamsRouter } from "./routes/teams.js";
 import { prizesRouter } from "./routes/prizes.js";
@@ -23,6 +24,9 @@ app.use("/api/challenges", requireAdminApiKey, challengesRouter);
 app.use("/api/teams", requireAdminApiKey, teamsRouter);
 app.use("/api/prizes", requireAdminApiKey, prizesRouter);
 app.use("/api/participants", requireAdminApiKey, participantsRouter);
+
+// Must be registered after all routes.
+app.use(errorHandler);
 
 const port = Number(process.env.API_PORT ?? 3001);
 app.listen(port, () => {

@@ -1,5 +1,11 @@
 import { prisma } from "./db.js";
-import { buildLeaderboard, movementPointsForActivity, computeTeamProgress, currentStreak } from "../game-engine/index.js";
+import {
+  buildLeaderboard,
+  movementPointsForActivity,
+  computeTeamProgress,
+  currentStreak,
+  dayKeyInTimezone,
+} from "../game-engine/index.js";
 import type { ScoringConfig } from "../shared/types.js";
 
 /** Find the single active challenge for an org (MVP: one running challenge at a time; Phase 3 adds concurrent challenges). */
@@ -43,6 +49,35 @@ export async function getTeamLeaderboard(challengeId: string) {
       vp: team.vpTransactions.reduce((sum: number, t: { amount: number }) => sum + t.amount, 0),
       movementPoints: movementByTeam.get(team.id) ?? 0,
     }))
+  );
+}
+
+/** Individual standings (VP, then movement points) across everyone with activity or VP in the challenge. */
+export async function getIndividualLeaderboard(challengeId: string) {
+  const challenge = await prisma.challenge.findUniqueOrThrow({ where: { id: challengeId } });
+  const scoringConfig = challenge.scoringConfig as unknown as ScoringConfig;
+
+  const [activities, vpByUser] = await Promise.all([
+    prisma.activity.findMany({
+      where: { challengeId, flagged: false },
+      select: { userId: true, activityType: true, steps: true, durationMinutes: true, distanceMeters: true },
+    }),
+    prisma.vpTransaction.groupBy({
+      by: ["userId"],
+      where: { challengeId, userId: { not: null } },
+      _sum: { amount: true },
+    }),
+  ]);
+
+  const movementByUser = new Map<string, number>();
+  for (const activity of activities) {
+    movementByUser.set(activity.userId, (movementByUser.get(activity.userId) ?? 0) + movementPointsForActivity(activity, scoringConfig));
+  }
+  const vpByUserId = new Map(vpByUser.map((row) => [row.userId as string, row._sum.amount ?? 0]));
+
+  const userIds = new Set([...movementByUser.keys(), ...vpByUserId.keys()]);
+  return buildLeaderboard(
+    [...userIds].map((id) => ({ id, name: id, vp: vpByUserId.get(id) ?? 0, movementPoints: movementByUser.get(id) ?? 0 }))
   );
 }
 
@@ -93,16 +128,16 @@ export async function getPersonalProgress(userId: string, challengeId: string) {
   const stepsByDay = new Map<string, number>();
   for (const a of activities) {
     if (a.activityType !== "steps" || a.steps == null) continue;
-    const day = a.startTime.toISOString().slice(0, 10);
+    const day = dayKeyInTimezone(a.startTime, challenge.timezone);
     stepsByDay.set(day, (stepsByDay.get(day) ?? 0) + a.steps);
   }
   for (const [day, steps] of stepsByDay) {
     dailyGoalMet[day] = steps >= scoringConfig.conversion.dailyGoalSteps;
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = dayKeyInTimezone(new Date(), challenge.timezone);
   const totalMovementPoints = activities.reduce(
-    (sum: number, a: Parameters<typeof movementPointsForActivity>[0]) => sum + movementPointsForActivity(a, scoringConfig),
+    (sum: number, a) => sum + movementPointsForActivity(a, scoringConfig),
     0
   );
   const totalVp = vpTransactions.reduce((sum: number, t: { amount: number }) => sum + t.amount, 0);

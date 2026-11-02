@@ -72,8 +72,14 @@ teamsRouter.post("/move-participant", async (req, res) => {
   res.json(membership);
 });
 
+const lockTeamSchema = z.object({ locked: z.boolean() });
+
 teamsRouter.patch("/:id/lock", async (req, res) => {
-  const { locked } = req.body as { locked: boolean };
-  const team = await prisma.team.update({ where: { id: req.params.id }, data: { isLocked: !!locked } });
+  const parsed = lockTeamSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const team = await prisma.team.update({ where: { id: req.params.id }, data: { isLocked: parsed.data.locked } });
   res.json(team);
 });

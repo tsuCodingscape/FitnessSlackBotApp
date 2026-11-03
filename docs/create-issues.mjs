@@ -81,7 +81,10 @@ function parseBacklog(markdown) {
   // Fail loudly on a malformed backlog rather than creating half-labelled issues.
   const errors = [];
   issues.forEach((i, index) => {
-    if (i.number !== index + 1) errors.push(`Issue "${i.title}" is numbered ${i.number}, expected ${index + 1}`);
+    // Numbers are GitHub issue numbers, so they need not start at 1, but must stay in order.
+    if (index > 0 && i.number <= issues[index - 1].number) {
+      errors.push(`Issue "${i.title}" is numbered ${i.number}, after ${issues[index - 1].number}; numbers must increase`);
+    }
     if (!i.labels) errors.push(`Issue ${i.number} has no "<!-- labels: ... | size: ... -->" line`);
     else if (!i.labels.some((l) => l in PRIORITY_COLORS)) errors.push(`Issue ${i.number} has no P0-P3 label`);
     if (!i.body) errors.push(`Issue ${i.number} has an empty body`);

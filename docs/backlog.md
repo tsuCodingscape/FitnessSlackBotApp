@@ -2,51 +2,51 @@
 
 Source: gaps found while building and running the MVP scaffold (code review plus the first full `npm run demo` run) against the PRD. Updated for PR #1 (schema fix, timezone-aware days, chapter arrival order, Champion/Comeback Kid achievements, API error handling).
 
-This file is the single source for the GitHub issues: `docs/create-issues.mjs` reads every `### N. Title` section below and turns it into an issue. Edit the issue text here, not in the script. Each issue's metadata is the HTML comment directly under its heading; `#### ` headings become `## ` in the issue body.
+This file is the single source for the GitHub issues: `docs/create-issues.mjs` reads every `### N. Title` section below and turns it into an issue. N is the GitHub issue number (#1 is PR #1, so issues start at #2); give a new issue the next unused number and correct it if GitHub assigns a different one. Edit the issue text here, not in the script. Each issue's metadata is the HTML comment directly under its heading; `#### ` headings become `## ` in the issue body.
 
 Priority key: P0 = blocks a real pilot, P1 = needed for a credible launch, P2 = important, P3 = later.
 Size key: S (<=2 days), M (~1 week), L (~2 weeks), XL (>2 weeks / needs a spike).
 
 ## Summary
 
-| # | Pri | Size | Milestone | Title |
+| Issue | Pri | Size | Milestone | Title |
 |---|-----|------|-----------|-------|
-| 1 | P0 | M | M1 | Calibrate chapter goals and scoring defaults against realistic activity |
-| 2 | P0 | M | M1 | Wire the blended scoring model into leaderboards |
-| 3 | P0 | L | M1 | Make settlement incremental and idempotent |
-| 4 | P0 | M | M1 | Scheduled activity sync worker |
-| 5 | P0 | L | M1 | Slack OAuth install and multi-workspace token storage |
-| 6 | P0 | L | M1 | Join Challenge flow and Home tab quick actions |
-| 7 | P0 | M | M1 | Notification scheduler with per-challenge configuration |
-| 8 | P0 | S | M1 | CI pipeline and database integration tests |
-| 9 | P1 | M | M1 | Enforce visibility modes and privacy controls everywhere |
-| 10 | P1 | L | M2 | Provider OAuth framework and secure token storage |
-| 11 | P1 | L | M2 | Fitbit provider (Web API) |
-| 12 | P1 | L | M2 | Garmin provider (Garmin Health API) |
-| 13 | P1 | XL | M2 | Mobile companion app: Apple Health (HealthKit) and Android Health Connect |
-| 14 | P2 | M | M2 | Spike: aggregator vs direct integrations for Samsung Health, Oura, Withings, Peloton and others |
-| 15 | P2 | M | M2 | Anti-cheat review queue and expanded detection |
-| 16 | P1 | L | M3 | Admin authentication and organization scoping |
-| 17 | P1 | XL | M3 | Web admin dashboard MVP (Challenge Builder) |
-| 18 | P2 | M | M3 | Challenge templates and theme library |
-| 19 | P2 | M | M3 | Prize engine and winner announcement |
-| 20 | P2 | S | M3 | Complete audit-log coverage and change history |
-| 21 | P2 | M | M3 | Admin analytics and success metrics |
-| 22 | P1 | L | M4 | Event engine: obstacles, power challenges, sprints, side quests, safehouses |
-| 23 | P2 | M | M4 | Catch-up mechanics (comeback and underdog bonuses) |
-| 24 | P2 | M | M4 | Team formation and balancing |
-| 25 | P2 | M | M4 | Leaderboard variants: today, this week, most improved, streaks, achievements |
-| 26 | P2 | S | M4 | Finish achievement fixes: Team Player and theme-able achievements |
-| 27 | P3 | L | M4 | Game board visualization |
-| 28 | P3 | M | M4 | Social features: reactions, shout-outs, achievement announcements |
-| 29 | P2 | L | M5 | Production deployment on Postgres |
-| 30 | P3 | XL | M5 | Enterprise: SSO/SCIM, HRIS, multi-challenge, multi-workspace, public API, white-label |
+| #2 | P0 | M | M1 | Calibrate chapter goals and scoring defaults against realistic activity |
+| #3 | P0 | M | M1 | Wire the blended scoring model into leaderboards |
+| #4 | P0 | L | M1 | Make settlement incremental and idempotent |
+| #5 | P0 | M | M1 | Scheduled activity sync worker |
+| #6 | P0 | L | M1 | Slack OAuth install and multi-workspace token storage |
+| #7 | P0 | L | M1 | Join Challenge flow and Home tab quick actions |
+| #8 | P0 | M | M1 | Notification scheduler with per-challenge configuration |
+| #9 | P0 | S | M1 | CI pipeline and database integration tests |
+| #10 | P1 | M | M1 | Enforce visibility modes and privacy controls everywhere |
+| #11 | P1 | L | M2 | Provider OAuth framework and secure token storage |
+| #12 | P1 | L | M2 | Fitbit provider (Web API) |
+| #13 | P1 | L | M2 | Garmin provider (Garmin Health API) |
+| #14 | P1 | XL | M2 | Mobile companion app: Apple Health (HealthKit) and Android Health Connect |
+| #15 | P2 | M | M2 | Spike: aggregator vs direct integrations for Samsung Health, Oura, Withings, Peloton and others |
+| #16 | P2 | M | M2 | Anti-cheat review queue and expanded detection |
+| #17 | P1 | L | M3 | Admin authentication and organization scoping |
+| #18 | P1 | XL | M3 | Web admin dashboard MVP (Challenge Builder) |
+| #19 | P2 | M | M3 | Challenge templates and theme library |
+| #20 | P2 | M | M3 | Prize engine and winner announcement |
+| #21 | P2 | S | M3 | Complete audit-log coverage and change history |
+| #22 | P2 | M | M3 | Admin analytics and success metrics |
+| #23 | P1 | L | M4 | Event engine: obstacles, power challenges, sprints, side quests, safehouses |
+| #24 | P2 | M | M4 | Catch-up mechanics (comeback and underdog bonuses) |
+| #25 | P2 | M | M4 | Team formation and balancing |
+| #26 | P2 | M | M4 | Leaderboard variants: today, this week, most improved, streaks, achievements |
+| #27 | P2 | S | M4 | Finish achievement fixes: Team Player and theme-able achievements |
+| #28 | P3 | L | M4 | Game board visualization |
+| #29 | P3 | M | M4 | Social features: reactions, shout-outs, achievement announcements |
+| #30 | P2 | L | M5 | Production deployment on Postgres |
+| #31 | P3 | XL | M5 | Enterprise: SSO/SCIM, HRIS, multi-challenge, multi-workspace, public API, white-label |
 
 ## M1 - Pilot-ready
 
 Internal pilot in a real Slack workspace with simulated device data: join flow, scheduled sync/settlement/notifications, calibrated scoring, CI.
 
-### 1. [P0] Calibrate chapter goals and scoring defaults against realistic activity
+### 2. [P0] Calibrate chapter goals and scoring defaults against realistic activity
 <!-- labels: P0, scoring, bug | size: M -->
 
 #### Context
@@ -68,7 +68,7 @@ In the first full demo run (2026-11-02) Phoenix logged 39,383 movement points an
 #### References
 PRD 9, 39, 41; prisma/seed.ts; src/game-engine/scoring.ts; src/providers/mock/mockProviderFactory.ts
 
-### 2. [P0] Wire the blended scoring model into leaderboards
+### 3. [P0] Wire the blended scoring model into leaderboards
 <!-- labels: P0, scoring | size: M -->
 
 #### Context
@@ -87,7 +87,7 @@ PRD 9, 39, 41; prisma/seed.ts; src/game-engine/scoring.ts; src/providers/mock/mo
 #### References
 PRD 40; src/game-engine/scoring.ts; src/api/routes/leaderboard.ts; src/slack-app/queries.ts
 
-### 3. [P0] Make settlement incremental and idempotent
+### 4. [P0] Make settlement incremental and idempotent
 <!-- labels: P0, backend, bug | size: L -->
 
 #### Context
@@ -107,7 +107,7 @@ PRD 40; src/game-engine/scoring.ts; src/api/routes/leaderboard.ts; src/slack-app
 #### References
 PRD 10, 34; src/scripts/settleChallenge.ts; src/game-engine/days.ts
 
-### 4. [P0] Scheduled activity sync worker
+### 5. [P0] Scheduled activity sync worker
 <!-- labels: P0, backend | size: M -->
 
 #### Context
@@ -116,7 +116,7 @@ Ingestion only runs from the seed script. The PRD target is near-real-time sync 
 #### Scope
 - Add a worker process (node-cron or a queue such as BullMQ/pg-boss) that syncs each connected user every N minutes, passing the challenge timezone that `ingestActivityForUser` now requires.
 - Per-connection backoff and `status=error` after repeated failures; surface in the participant device-health view.
-- Trigger settlement (issue 3) after the end-of-day sync window.
+- Trigger settlement (#4) after the end-of-day sync window.
 
 #### Acceptance criteria
 - [ ] `npm run worker` syncs all active-challenge participants on an interval.
@@ -126,7 +126,7 @@ Ingestion only runs from the seed script. The PRD target is near-real-time sync 
 #### References
 PRD 34; src/providers/ingest.ts
 
-### 5. [P0] Slack OAuth install and multi-workspace token storage
+### 6. [P0] Slack OAuth install and multi-workspace token storage
 <!-- labels: P0, slack | size: L -->
 
 #### Context
@@ -146,7 +146,7 @@ The app boots with a single `SLACK_BOT_TOKEN` and never reads `SlackInstallation
 #### References
 PRD 15; src/slack-app/app.ts; prisma SlackInstallation
 
-### 6. [P0] Join Challenge flow and Home tab quick actions
+### 7. [P0] Join Challenge flow and Home tab quick actions
 <!-- labels: P0, slack | size: L -->
 
 #### Context
@@ -166,7 +166,7 @@ The invitation -> join -> pick team -> choose avatar -> connect device journey (
 #### References
 PRD 6, 16; src/slack-app/app.ts; src/slack-app/blocks/homeTab.ts; src/slack-app/commands/fitness.ts
 
-### 7. [P0] Notification scheduler with per-challenge configuration
+### 8. [P0] Notification scheduler with per-challenge configuration
 <!-- labels: P0, slack | size: M -->
 
 #### Context
@@ -185,7 +185,7 @@ Message builders exist (morning nudge, midday standing, achievement, team milest
 #### References
 PRD 17; src/slack-app/notifications.ts
 
-### 8. [P0] CI pipeline and database integration tests
+### 9. [P0] CI pipeline and database integration tests
 <!-- labels: P0, devex | size: S -->
 
 #### Context
@@ -205,7 +205,7 @@ Typecheck and 46 unit tests pass, but only pure logic is tested. Ingest, settlem
 #### References
 README "Verified state"; package.json; prisma/schema.prisma
 
-### 9. [P1] Enforce visibility modes and privacy controls everywhere
+### 10. [P1] Enforce visibility modes and privacy controls everywhere
 <!-- labels: P1, privacy, slack | size: M -->
 
 #### Context
@@ -228,7 +228,7 @@ PRD 20, 35, 36; src/api/routes/leaderboard.ts
 
 Real fitness data from Fitbit, Garmin, Apple Health and Android Health Connect replaces the mock providers.
 
-### 10. [P1] Provider OAuth framework and secure token storage
+### 11. [P1] Provider OAuth framework and secure token storage
 <!-- labels: P1, integrations, backend | size: L -->
 
 #### Context
@@ -247,7 +247,7 @@ Device connections carry placeholder fields (`accessToken`, `refreshToken`) with
 #### References
 PRD 31, 35; src/providers/registry.ts
 
-### 11. [P1] Fitbit provider (Web API)
+### 12. [P1] Fitbit provider (Web API)
 <!-- labels: P1, integrations | size: L -->
 
 #### Context
@@ -265,7 +265,7 @@ Fitbit is the most straightforward cloud-API integration and the best first real
 #### References
 PRD 6, 31; src/providers/types.ts
 
-### 12. [P1] Garmin provider (Garmin Health API)
+### 13. [P1] Garmin provider (Garmin Health API)
 <!-- labels: P1, integrations | size: L -->
 
 #### Context
@@ -283,7 +283,7 @@ Garmin access requires approval for the Garmin Connect developer program and wor
 #### References
 PRD 6, 31
 
-### 13. [P1] Mobile companion app: Apple Health (HealthKit) and Android Health Connect
+### 14. [P1] Mobile companion app: Apple Health (HealthKit) and Android Health Connect
 <!-- labels: P1, integrations, mobile | size: XL -->
 
 #### Context
@@ -302,7 +302,7 @@ Apple Health has no server-side API and Android Health Connect is an on-device A
 #### References
 PRD 6, 31, 35
 
-### 14. [P2] Spike: aggregator vs direct integrations for Samsung Health, Oura, Withings, Peloton and others
+### 15. [P2] Spike: aggregator vs direct integrations for Samsung Health, Oura, Withings, Peloton and others
 <!-- labels: P2, integrations | size: M -->
 
 #### Context
@@ -319,7 +319,7 @@ Building each wearable separately is expensive. Aggregator APIs can cover long-t
 #### References
 PRD 31, 44
 
-### 15. [P2] Anti-cheat review queue and expanded detection
+### 16. [P2] Anti-cheat review queue and expanded detection
 <!-- labels: P2, anti-cheat | size: M -->
 
 #### Context
@@ -342,7 +342,7 @@ PRD 37; src/providers/antiCheat.ts; src/providers/ingest.ts
 
 HR/People admins can build and run a challenge without engineering help: web dashboard, templates, theming, prizes, analytics.
 
-### 16. [P1] Admin authentication and organization scoping
+### 17. [P1] Admin authentication and organization scoping
 <!-- labels: P1, security, backend | size: L -->
 
 #### Context
@@ -361,7 +361,7 @@ Admin routes use one shared API key, and no route is scoped by organization, so 
 #### References
 PRD 28-30; src/api/adminAuth.ts; src/api/routes/participants.ts
 
-### 17. [P1] Web admin dashboard MVP (Challenge Builder)
+### 18. [P1] Web admin dashboard MVP (Challenge Builder)
 <!-- labels: P1, frontend, admin | size: XL -->
 
 #### Context
@@ -381,7 +381,7 @@ The Challenge Builder exists only as REST endpoints. HR admins need a UI.
 #### References
 PRD 21-24, 28-30; src/api/routes/challenges.ts
 
-### 18. [P2] Challenge templates and theme library
+### 19. [P2] Challenge templates and theme library
 <!-- labels: P2, admin | size: M -->
 
 #### Context
@@ -399,7 +399,7 @@ Admins should be able to launch quickly from Quick Step Challenge, Summer Sprint
 #### References
 PRD 22-24, 27
 
-### 19. [P2] Prize engine and winner announcement
+### 20. [P2] Prize engine and winner announcement
 <!-- labels: P2, admin | size: M -->
 
 #### Context
@@ -417,7 +417,7 @@ Prizes are stored but never evaluated. Nothing determines winners, hides prizes 
 #### References
 PRD 25-26
 
-### 20. [P2] Complete audit-log coverage and change history
+### 21. [P2] Complete audit-log coverage and change history
 <!-- labels: P2, admin, backend | size: S -->
 
 #### Context
@@ -433,7 +433,7 @@ Only challenge create/update and participant moves write AuditLog rows; team cre
 #### References
 PRD 30
 
-### 21. [P2] Admin analytics and success metrics
+### 22. [P2] Admin analytics and success metrics
 <!-- labels: P2, analytics | size: M -->
 
 #### Context
@@ -454,7 +454,7 @@ PRD 28, 46
 
 Obstacles, power events, catch-up mechanics, team formation, richer leaderboards, social features.
 
-### 22. [P1] Event engine: obstacles, power challenges, sprints, side quests, safehouses
+### 23. [P1] Event engine: obstacles, power challenges, sprints, side quests, safehouses
 <!-- labels: P1, game-engine | size: L -->
 
 #### Context
@@ -463,7 +463,7 @@ The ChallengeEvent table exists but no logic uses it. Events are the main thing 
 #### Scope
 - Event types with config schemas and validation (target points, multiplier, bonus VP, window).
 - Apply multipliers during power windows in movement-point calculation.
-- Track obstacle/side-quest completion per team and award VP through the idempotent ledger (issue 3).
+- Track obstacle/side-quest completion per team and award VP through the idempotent ledger (#4).
 - Admin API (and later dashboard) to schedule events; Slack announcements at start/finish.
 
 #### Acceptance criteria
@@ -473,7 +473,7 @@ The ChallengeEvent table exists but no logic uses it. Events are the main thing 
 #### References
 PRD 13
 
-### 23. [P2] Catch-up mechanics (comeback and underdog bonuses)
+### 24. [P2] Catch-up mechanics (comeback and underdog bonuses)
 <!-- labels: P2, game-engine | size: M -->
 
 #### Context
@@ -489,7 +489,7 @@ Prevents the leaderboard from going stale once a team pulls ahead. Since PR #1, 
 #### References
 PRD 14; src/game-engine/leaderboard.ts
 
-### 24. [P2] Team formation and balancing
+### 25. [P2] Team formation and balancing
 <!-- labels: P2, teams | size: M -->
 
 #### Context
@@ -506,7 +506,7 @@ Only manual team creation and moves exist.
 #### References
 PRD 11-12
 
-### 25. [P2] Leaderboard variants: today, this week, most improved, streaks, achievements
+### 26. [P2] Leaderboard variants: today, this week, most improved, streaks, achievements
 <!-- labels: P2, slack | size: M -->
 
 #### Context
@@ -514,7 +514,7 @@ Only the overall team leaderboard is exposed in Slack; `buildMostImprovedLeaderb
 
 #### Scope
 - `/fitness leaderboard [today|week|improved|streaks|achievements]` and a Home-tab toggle.
-- Window queries share the standings service from issue 2.
+- Window queries share the standings service from #3.
 
 #### Acceptance criteria
 - [ ] Each variant returns the expected ordering on seed data.
@@ -522,14 +522,14 @@ Only the overall team leaderboard is exposed in Slack; `buildMostImprovedLeaderb
 #### References
 PRD 19; src/game-engine/leaderboard.ts; src/slack-app/queries.ts
 
-### 26. [P2] Finish achievement fixes: Team Player and theme-able achievements
+### 27. [P2] Finish achievement fixes: Team Player and theme-able achievements
 <!-- labels: P2, game-engine, bug | size: S -->
 
 #### Context
 PR #1 wired up Champion (chapter wins from arrival order) and Comeback Kid (standings replayed over time), so every achievement can now unlock. Two gaps remain: Team Player counts a user's personal goal days rather than contribution to a team goal, and achievement names and emojis are fixed rather than following the challenge theme. Comeback Kid is judged on movement-point standings, not VP; confirm that is the intended rule.
 
 #### Scope
-- Redefine Team Player against actual team-goal contribution (depends on the per-team daily goal from issue 3).
+- Redefine Team Player against actual team-goal contribution (depends on the per-team daily goal from #4).
 - Theme-able achievement names/emojis per challenge.
 - Decide whether Comeback Kid uses movement points or VP standings.
 
@@ -540,7 +540,7 @@ PR #1 wired up Champion (chapter wins from arrival order) and Comeback Kid (stan
 #### References
 PRD 38; src/scripts/settleChallenge.ts; src/game-engine/achievements.ts
 
-### 27. [P3] Game board visualization
+### 28. [P3] Game board visualization
 <!-- labels: P3, frontend, slack | size: L -->
 
 #### Context
@@ -556,7 +556,7 @@ Each challenge should show a themed board with team markers and the next event. 
 #### References
 PRD 8
 
-### 28. [P3] Social features: reactions, shout-outs, achievement announcements
+### 29. [P3] Social features: reactions, shout-outs, achievement announcements
 <!-- labels: P3, slack | size: M -->
 
 #### Context
@@ -576,7 +576,7 @@ PRD 18
 
 Production hosting on Postgres, SSO/SCIM/HRIS, multi-workspace, API, white-label.
 
-### 29. [P2] Production deployment on Postgres
+### 30. [P2] Production deployment on Postgres
 <!-- labels: P2, infra | size: L -->
 
 #### Context
@@ -593,7 +593,7 @@ The scaffold runs on SQLite. Production needs Postgres (provider switch, native 
 #### References
 README "Going to production"; docker-compose.yml; prisma/schema.prisma
 
-### 30. [P3] Enterprise: SSO/SCIM, HRIS, multi-challenge, multi-workspace, public API, white-label
+### 31. [P3] Enterprise: SSO/SCIM, HRIS, multi-challenge, multi-workspace, public API, white-label
 <!-- labels: P3, enterprise | size: XL -->
 
 #### Context

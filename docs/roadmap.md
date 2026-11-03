@@ -1,6 +1,6 @@
 # Team Sprint - Roadmap
 
-Companion to the prioritized backlog (30 issues, see [backlog.md](backlog.md) and the GitHub milestones of the same names). Sizes are rough: S <= 2 days, M ~ 1 week, L ~ 2 weeks, XL > 2 weeks or needs a spike. No calendar dates are committed because they depend on team size; sequencing and dependencies are what matter here.
+Companion to the prioritized backlog (30 issues, see [backlog.md](backlog.md) and the GitHub milestones of the same names). Numbers like #4 are GitHub issue numbers (#2-#31; #1 is the PR that fixed the scaffold). Sizes are rough: S <= 2 days, M ~ 1 week, L ~ 2 weeks, XL > 2 weeks or needs a spike. No calendar dates are committed because they depend on team size; sequencing and dependencies are what matter here.
 
 ## Where we are (updated 2026-11-02)
 
@@ -17,9 +17,9 @@ PR #1 fixed the problems that stopped the scaffold from running or scoring corre
 
 What the first full run still teaches us:
 
-- **Scoring is not calibrated.** Teams log 35-50k movement points against a final-chapter goal of 2,600, so every team clears every chapter within days. This is the first thing to fix (issue 1), because a pilot with a pointless board will not retain people.
-- **The "not a step-count arms race" differentiator is built but not switched on.** The blended scoring function exists and is tested, but leaderboards still rank by raw VP (issue 2).
-- **Settlement is a one-shot batch and double-awards if rerun**, so nothing can run on a schedule until it is idempotent (issue 3).
+- **Scoring is not calibrated.** Teams log 35-50k movement points against a final-chapter goal of 2,600, so every team clears every chapter within days. This is the first thing to fix (#2), because a pilot with a pointless board will not retain people.
+- **The "not a step-count arms race" differentiator is built but not switched on.** The blended scoring function exists and is tested, but leaderboards still rank by raw VP (#3).
+- **Settlement is a one-shot batch and double-awards if rerun**, so nothing can run on a schedule until it is idempotent (#4).
 
 ## Milestones
 
@@ -27,7 +27,7 @@ What the first full run still teaches us:
 
 Goal: a Codingscape internal pilot in a real Slack workspace, on simulated device data, that people can join and want to come back to.
 
-Order of work: calibrate scoring (1) and wire blended scoring (2) -> idempotent daily settlement (3) -> scheduled sync worker (4) -> Slack OAuth install (5) -> Join Challenge flow and Home actions (6) -> notification scheduler (7) -> privacy enforcement (9). CI and DB integration tests (8) start first and run alongside everything else.
+Order of work: calibrate scoring (#2) and wire blended scoring (#3) -> idempotent daily settlement (#4) -> scheduled sync worker (#5) -> Slack OAuth install (#6) -> Join Challenge flow and Home actions (#7) -> notification scheduler (#8) -> privacy enforcement (#10). CI and DB integration tests (#9) start first and run alongside everything else.
 
 Exit criteria: a 2-week pilot runs unattended, standings are close, daily notifications arrive, and re-running any job changes nothing.
 
@@ -35,7 +35,7 @@ Exit criteria: a 2-week pilot runs unattended, standings are close, daily notifi
 
 Goal: real activity data replaces the simulator.
 
-Start the long-lead items on day one of M1: apply for Garmin Health API access and decide the mobile-companion approach (native vs cross-platform spike). Build the OAuth framework (10) and Fitbit (11) first, because they are the fastest path to real data. The mobile companion app (13) is the largest single item and the only route to Apple Health/Apple Watch and Android Health Connect, since neither has a server-side API; plan for App Store and Play Store review time. The aggregator-vs-direct spike (14) decides how Samsung, Oura, Withings and Peloton are covered.
+Start the long-lead items on day one of M1: apply for Garmin Health API access and decide the mobile-companion approach (native vs cross-platform spike). Build the OAuth framework (#11) and Fitbit (#12) first, because they are the fastest path to real data. The mobile companion app (#14) is the largest single item and the only route to Apple Health/Apple Watch and Android Health Connect, since neither has a server-side API; plan for App Store and Play Store review time. The aggregator-vs-direct spike (#15) decides how Samsung, Oura, Withings and Peloton are covered.
 
 Exit criteria: at least Fitbit plus one mobile platform feeding a live challenge with no double counting across sources.
 
@@ -43,28 +43,28 @@ Exit criteria: at least Fitbit plus one mobile platform feeding a live challenge
 
 Goal: an HR or People admin runs a challenge without engineering help.
 
-Admin authentication and organization scoping (16) must land before any customer data is hosted, because the API is currently unscoped. Then the web dashboard (17), templates and theming (18), prizes (19), audit coverage (20) and analytics (21).
+Admin authentication and organization scoping (#17) must land before any customer data is hosted, because the API is currently unscoped. Then the web dashboard (#18), templates and theming (#19), prizes (#20), audit coverage (#21) and analytics (#22).
 
 Exit criteria: a non-engineer creates, launches, adjusts and closes a challenge from the dashboard, with winners and prizes announced automatically.
 
 ### M4 - Game depth and social (7 issues)
 
-Goal: make each challenge feel different. The event engine (22) is the keystone: obstacles, power windows, sprints and side quests turn a ranking into a game. Catch-up mechanics (23), team formation and balancing (24), leaderboard variants (25), the remaining achievement work (26, now small since PR #1), board visualization (27) and social features (28) follow.
+Goal: make each challenge feel different. The event engine (#23) is the keystone: obstacles, power windows, sprints and side quests turn a ranking into a game. Catch-up mechanics (#24), team formation and balancing (#25), leaderboard variants (#26), the remaining achievement work (#27, now small since PR #1), board visualization (#28) and social features (#29) follow.
 
 M4 can overlap M2/M3 once M1 is done, because it touches the game engine rather than integrations or admin UI.
 
 ### M5 - Enterprise and scale (2 issues, to be broken down later)
 
-Production deployment on Postgres (29) is needed before any external customer; SSO/SCIM/HRIS, concurrent challenges, multi-workspace and white-label (30) are scoped when there is customer demand.
+Production deployment on Postgres (#30) is needed before any external customer; SSO/SCIM/HRIS, concurrent challenges, multi-workspace and white-label (#31) are scoped when there is customer demand.
 
 ## Dependencies and critical path
 
-- Idempotent settlement (3) -> scheduled worker (4) -> notifications (7). Do not schedule anything before 3.
-- Per-team daily goal in settlement (3) -> Team Player redefinition (26).
-- Shared standings service (2) -> leaderboard variants (25), catch-up mechanics (23) and analytics (21).
-- OAuth framework (10) -> every real provider (11, 12) and the companion app's sign-in (13).
-- Admin auth and org scoping (16) -> web dashboard (17) -> templates and prizes (18, 19).
-- Event engine (22) -> catch-up (23) and side quests/obstacles content in templates (18).
+- Idempotent settlement (#4) -> scheduled worker (#5) -> notifications (#8). Do not schedule anything before #4.
+- Per-team daily goal in settlement (#4) -> Team Player redefinition (#27).
+- Shared standings service (#3) -> leaderboard variants (#26), catch-up mechanics (#24) and analytics (#22).
+- OAuth framework (#11) -> every real provider (#12, #13) and the companion app's sign-in (#14).
+- Admin auth and org scoping (#17) -> web dashboard (#18) -> templates and prizes (#19, #20).
+- Event engine (#23) -> catch-up (#24) and side quests/obstacles content in templates (#19).
 
 ## Lead-time risks to start early
 
@@ -78,8 +78,8 @@ Production deployment on Postgres (29) is needed before any external customer; S
 
 1. Pilot audience and size (Codingscape-only first, or a friendly customer).
 2. Companion app approach: native Swift/Kotlin vs React Native/Flutter.
-3. Build vs buy for the long tail of wearables (spike in issue 14).
-4. Hosting target and who owns production operations (needed for issue 29).
+3. Build vs buy for the long tail of wearables (spike in #15).
+4. Hosting target and who owns production operations (needed for #30).
 5. Whether Team Sprint is an internal tool, a Codingscape client offering, or a product; this changes the weight of M3 and M5.
 
 ## How to use this

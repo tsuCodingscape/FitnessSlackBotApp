@@ -29,10 +29,10 @@ Slack-native gamified fitness challenge platform, built from the full PRD. This 
 
 ## Known issues
 
-- Chapter goals are far too low (final goal 2,600 vs 35-50k movement points), so every team clears every chapter. Backlog issue 1.
-- Settlement is not idempotent: running it twice double-awards VP. Backlog issue 3.
-- Leaderboards rank by raw VP; blended scoring is unused. Backlog issue 2.
-- Only the REST leaderboard honors visibility modes, and its anonymous aliases are unstable. Backlog issue 9.
+- Chapter goals are far too low (final goal 2,600 vs 35-50k movement points), so every team clears every chapter. Issue #2.
+- Settlement is not idempotent: running it twice double-awards VP. Issue #4.
+- Leaderboards rank by raw VP; blended scoring is unused. Issue #3.
+- Only the REST leaderboard honors visibility modes, and its anonymous aliases are unstable. Issue #10.
 
 Fixed in PR #1: the SQLite schema blocker, API crashes on bad requests, UTC day bucketing, first-to-destination ranking, and the Champion and Comeback Kid achievements.
 
